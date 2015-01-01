@@ -101,20 +101,25 @@ def associationsInPackage(package):
 # examples
 
 def umlEnumeration2OCL(enumeration):
-    """
-    Generate USE OCL code for the enumeration
-    """
+	"""
+	Generate USE OCL code for the enumeration
+	"""
+	print 'enum ',name '\n{'
+	for val in enumeration.value:
+		print '\t', val.name
+	print '}'
+    
 
 def umlBasicType2OCL(basicType):
-    """
-    Generate USE OCL basic type. Note that
-    type conversions are required.
-    """
+	"""
+	Generate USE OCL basic type. Note that
+	type conversions are required.
+	"""
     
 # etc.
 
 def package2OCL(package):
-    """
+	"""
     Generate a complete OCL specification for a given package.
     The inner package structure is ignored. That is, all
     elements useful for USE OCL (enumerations, classes, 
@@ -142,3 +147,4 @@ def package2OCL(package):
 # (1) computation of the 'package' parameter
 # (2) call of package2OCL(package)
 # (3) do something with the result
+
