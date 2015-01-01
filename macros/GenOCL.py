@@ -7,7 +7,7 @@
 FILL THIS SECTION AS SHOWN BELOW AND LINES STARTING WITH ###
 @author Xuan Shong TI WONG SHI <xuan.ti@mydomain.com>
 @author Maria Shohie CEZAR LOPEZ DE ANDERA <maria.cezar@ujf-grenoble.fr>
-@group  G99
+@group  G17
 
 Current state of the generator
 ----------------------------------
