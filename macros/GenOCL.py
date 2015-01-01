@@ -104,10 +104,10 @@ def umlEnumeration2OCL(enumeration):
 	"""
 	Generate USE OCL code for the enumeration
 	"""
-	print 'enum ',name '\n{'
+	print 'enum', enumeration.name, '\n{'
 	for val in enumeration.value:
 		print '\t', val.name
-	print '}'
+	print '}\n'
     
 
 def umlBasicType2OCL(basicType):
@@ -115,7 +115,41 @@ def umlBasicType2OCL(basicType):
 	Generate USE OCL basic type. Note that
 	type conversions are required.
 	"""
-    
+	if basicType == 'float':
+		return 'Real'
+	return basicType.capitalize()
+
+def umlAttribute2OCL(attribute):
+	"""
+	UML attribute generation
+	"""
+	print '\t', attribute.name, ':', umlBasicType2OCL(attribute.type.name)
+	
+def umlOperation2OCL(operation):
+	"""
+	UML operation generation
+	"""
+	print '\t', operation.name+'() :'
+	
+def umlClass2OCL(clazz):
+	"""
+	UML class generation
+	"""
+	attributes = clazz.ownedAttribute
+	operations = clazz.ownedOperation
+	
+	print 'class ', clazz.name
+	if len(attributes) > 0:
+		print 'attributes'
+		for attr in attributes:
+			umlAttribute2OCL(attr)
+	
+	if len(operations) > 0:
+		print 'operations'
+		for op in operations:
+			umlOperation2OCL(op)
+			
+	print 'end\n	'
 # etc.
 
 def package2OCL(package):
@@ -129,6 +163,13 @@ def package2OCL(package):
     might exist is not reflected in the USE OCL specification
     as USE is not supporting the concept of package.
     """
+	elements = package.ownedElement
+	
+	for element in elements:
+		if isinstance(element, Enumeration):
+			umlEnumeration2OCL(element)
+		if isinstance(element, Class):
+			umlClass2OCL(element)
 
 
 
@@ -148,3 +189,9 @@ def package2OCL(package):
 # (2) call of package2OCL(package)
 # (3) do something with the result
 
+print 'model CyberResidences\n\n'
+for selected in selectedElements:
+	if isinstance(selected, Package):
+		package2OCL(selected)
+	
+	
