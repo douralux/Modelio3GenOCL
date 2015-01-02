@@ -190,8 +190,9 @@ def package2OCL(package):
 # (3) do something with the result
 
 print 'model CyberResidences\n\n'
-for selected in selectedElements:
-	if isinstance(selected, Package):
-		package2OCL(selected)
+for element in selectedElements:
+	for p in element.ownedElement:
+		if isinstance(selected, Package):		
+			package2OCL(p)
 	
 	
