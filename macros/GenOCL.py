@@ -129,7 +129,7 @@ def umlOperation2OCL(operation):
 	"""
 	UML operation generation
 	"""
-	print '\t', operation.name+'() :'
+	print '\t', operation.name+'() :', operation.return
 	
 def umlClass2OCL(clazz):
 	"""
@@ -170,6 +170,8 @@ def package2OCL(package):
 			umlEnumeration2OCL(element)
 		if isinstance(element, Class):
 			umlClass2OCL(element)
+		if isinstance(element, Package):
+			package2OCL(element) # Récursion sur les sous packages
 
 
 
@@ -191,8 +193,8 @@ def package2OCL(package):
 
 print 'model CyberResidences\n\n'
 for element in selectedElements:
-	for p in element.ownedElement:
-		if isinstance(selected, Package):		
-			package2OCL(p)
+	if isinstance(element, Package):
+		package2OCL(element)		
+				
 	
 	
