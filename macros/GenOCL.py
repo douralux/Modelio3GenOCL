@@ -118,6 +118,12 @@ def umlBasicType2OCL(basicType):
 	if basicType == 'float':
 		return 'Real'
 	return basicType.capitalize()
+	
+def paramater2OCL(parameter):
+	"""
+	Parameter representation in OCL
+	"""
+	
 
 def umlAttribute2OCL(attribute):
 	"""
@@ -129,7 +135,7 @@ def umlOperation2OCL(operation):
 	"""
 	UML operation generation
 	"""
-	print '\t', operation.name+'() :', operation.return
+	print '\t', operation.name+'() :', operation.return.type.name
 	
 def umlClass2OCL(clazz):
 	"""
@@ -138,7 +144,7 @@ def umlClass2OCL(clazz):
 	attributes = clazz.ownedAttribute
 	operations = clazz.ownedOperation
 	
-	print 'class ', clazz.name
+	print abstract(clazz) + ' class ' + clazz.name + inheritance(clazz)
 	if len(attributes) > 0:
 		print 'attributes'
 		for attr in attributes:
@@ -149,7 +155,28 @@ def umlClass2OCL(clazz):
 		for op in operations:
 			umlOperation2OCL(op)
 			
-	print 'end\n	'
+	print 'end\n'
+	
+def inheritance(clazz):
+	'''
+	Check if a class is subclass of another class 
+	then return the representation in OCL format
+	'''
+	parents = clazz.parent
+	if len(parents) > 0:
+		p = parents.get(0)
+		return ' < ' + p.superType.name
+	
+	return ''
+
+def abstract(clazz):
+	'''
+	Return 'abstract' if clazz is abstract
+	'''
+	if clazz.isIsAbstract:
+		return 'abstract'
+	
+	return ''
 # etc.
 
 def package2OCL(package):
@@ -191,10 +218,20 @@ def package2OCL(package):
 # (2) call of package2OCL(package)
 # (3) do something with the result
 
-print 'model CyberResidences\n\n'
-for element in selectedElements:
-	if isinstance(element, Package):
-		package2OCL(element)		
+elements = selectedElements
+isPackageSelected = False
+if len(elements) > 0:
+	print 'model CyberResidences\n'
+
+	for e in elements:
+		if isinstance(e, Package):
+			isPackageSelected = True
+			package2OCL(e)
+	
+	if isPackageSelected == False:
+		print '-- No selected valide package !'
+else:
+		print '-- No selected element !\n-- Please select one !'
 				
 	
 	
