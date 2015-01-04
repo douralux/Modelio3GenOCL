@@ -42,14 +42,17 @@ Additional observations could go there
 #---------------------------------------------------------
 
 # example
-def isAssociationClass(element):
-    """ 
-    Return True if and only if the element is an association 
-    that have an associated class, or if this is a class that
-    has a associated association. (see the Modelio metamodel
-    for details)
-    """
-    # TODO
+def isAssociationClass(clazz):
+	""" 
+	Return True if and only if the element is an association 
+	that have an associated class, or if this is a class that
+	has a associated association. (see the Modelio metamodel
+	for details)
+	"""
+	if clazz.linkToAssociation is None:
+		return False
+	
+	return True
     
  
 #---------------------------------------------------------
@@ -68,7 +71,56 @@ def associationsInPackage(package):
     arrive to a class which is recursively contained in
     a package.
     """
-    
+
+def inheritance(clazz):
+	'''
+	Check if a class is subclass of another class 
+	then return the representation in OCL format
+	'''
+	parents = clazz.parent
+	if len(parents) > 0:
+		p = parents.get(0)
+		return ' < ' + p.superType.name
+	
+	return ''
+
+def abstract(clazz):
+	'''
+	Return 'abstract' if clazz is abstract
+	'''
+	if clazz.isIsAbstract():
+		return 'abstract '
+	
+	return ''
+	
+def associationRoleName(asso):
+	'''
+	Get the association end role name
+	'''
+	if len(asso.name) > 0:
+		return ' role ' + asso.name.capitalize()
+		
+	return ''
+
+def isAssociationRelationship(asso):
+	'''
+	Return true if asso is an association relationship, false if not
+	Is merely the same as isAssociation class !
+	'''
+	if asso.linkToClass is None:
+		return False
+		
+	return True
+	
+def associationClassString(asso):
+	'''
+	Return 'associationClass' if asso is an association class or 'association' if not
+	'''
+	if isAssociationRelationship(asso):
+		return 'associationclass '
+		
+	return 'association '
+	
 
     
 #---------------------------------------------------------
@@ -104,9 +156,18 @@ def umlEnumeration2OCL(enumeration):
 	"""
 	Generate USE OCL code for the enumeration
 	"""
-	print 'enum', enumeration.name, '\n{'
-	for val in enumeration.value:
-		print '\t', val.name
+	i = 0
+	values = enumeration.value
+	n = len(values) 
+	
+	print 'enum ' + enumeration.name 
+	print '{'
+	
+	while i < (n - 1):
+		print '\t' + values.get(i).name + ','
+		i = i + 1
+	print '\t' + values.get(i).name
+			
 	print '}\n'
     
 
@@ -123,19 +184,19 @@ def paramater2OCL(parameter):
 	"""
 	Parameter representation in OCL
 	"""
-	
+	# TODO
 
 def umlAttribute2OCL(attribute):
 	"""
 	UML attribute generation
 	"""
-	print '\t', attribute.name, ':', umlBasicType2OCL(attribute.type.name)
+	print '\t' + attribute.name + ' : ' + umlBasicType2OCL(attribute.type.name)
 	
 def umlOperation2OCL(operation):
 	"""
 	UML operation generation
 	"""
-	print '\t', operation.name+'() :', operation.return.type.name
+	print '\t' + operation.name + '() : ' + operation.return.type.name # TO COMPLETE !!!
 	
 def umlClass2OCL(clazz):
 	"""
@@ -144,7 +205,26 @@ def umlClass2OCL(clazz):
 	attributes = clazz.ownedAttribute
 	operations = clazz.ownedOperation
 	
-	print abstract(clazz) + ' class ' + clazz.name + inheritance(clazz)
+	if not isAssociationClass(clazz):
+		print abstract(clazz) + 'class ' + clazz.name + inheritance(clazz)	
+		commonUmlClass2OCL(clazz)			
+		print 'end\n'
+	# else:
+	# The else is handled by association generation
+	# see umlAssociation2OCL(clazz)
+	
+	
+	# UML association handling
+	umlAssociation2OCL(clazz)
+
+def commonUmlClass2OCL(clazz):
+	'''
+	Common class handling (association class or normal class) :
+	<< Essentially class attributes and operations >>
+	'''
+	attributes = clazz.ownedAttribute
+	operations = clazz.ownedOperation
+	
 	if len(attributes) > 0:
 		print 'attributes'
 		for attr in attributes:
@@ -154,29 +234,37 @@ def umlClass2OCL(clazz):
 		print 'operations'
 		for op in operations:
 			umlOperation2OCL(op)
+	
+def umlAssociation2OCL(clazz):
+	'''
+	UML association to OCL
+	'''
+	targetingEnds = clazz.targetingEnd
+		
+	# For all targetingEnd 
+	for target in targetingEnds: 
+		# Get the association
+		asso = target.association 
 			
-	print 'end\n'
-	
-def inheritance(clazz):
-	'''
-	Check if a class is subclass of another class 
-	then return the representation in OCL format
-	'''
-	parents = clazz.parent
-	if len(parents) > 0:
-		p = parents.get(0)
-		return ' < ' + p.superType.name
-	
-	return ''
+		# Checking if association isn't treat yet
+		if not (asso.name in targetAlreadyTreated):
+			# Add the name to the list
+			targetAlreadyTreated.append(asso.name)
+			
+			print associationClassString(asso) + asso.name + ' between'
+			
+			for end in asso.end:
+				print '\t' + end.owner.name + '[' + end.multiplicityMin + '..' + end.multiplicityMax + ']' + associationRoleName(end)			
+			
+			if isAssociationRelationship(asso):
+				# handle association class there
+				commonUmlClass2OCL(asso.linkToClass.classPart)
+				print 'end\n'
+				# handle recursively asso's class association
+				umlAssociation2OCL(asso.linkToClass.classPart)
+			else:
+				print 'end\n'			
 
-def abstract(clazz):
-	'''
-	Return 'abstract' if clazz is abstract
-	'''
-	if clazz.isIsAbstract:
-		return 'abstract'
-	
-	return ''
 # etc.
 
 def package2OCL(package):
@@ -191,17 +279,27 @@ def package2OCL(package):
     as USE is not supporting the concept of package.
     """
 	elements = package.ownedElement
+				
+	for element in elements:		
+		if isinstance(element, Class):
+			umlClass2OCL(element)
+		if isinstance(element, Package):
+			package2OCL(element) # Handling other packages
+
+
+def enumPackageGeneration(package):
+	'''
+	Generate enumerations for all packages : This allows us to have 
+	enum declaration at the top of generated OCL code 
+	(Mandatory in USE specs)
+	'''
+	elements = package.ownedElement
 	
 	for element in elements:
 		if isinstance(element, Enumeration):
 			umlEnumeration2OCL(element)
-		if isinstance(element, Class):
-			umlClass2OCL(element)
 		if isinstance(element, Package):
-			package2OCL(element) # Récursion sur les sous packages
-
-
-
+			enumPackageGeneration(element) # Handle other packages
 
 #---------------------------------------------------------
 #           User interface for the Transformation 
@@ -218,14 +316,25 @@ def package2OCL(package):
 # (2) call of package2OCL(package)
 # (3) do something with the result
 
+# Elements selected by user in Modelio
 elements = selectedElements
+
+# Check if a user has selected a package
 isPackageSelected = False
+
+# Contains associations whose OCL declaration are already generated
+# Avoid duplicate declaration
+targetAlreadyTreated = []
+
 if len(elements) > 0:
 	print 'model CyberResidences\n'
 
 	for e in elements:
 		if isinstance(e, Package):
 			isPackageSelected = True
+			# Generate enumerations first
+			enumPackageGeneration(e)
+			# Generate the rest
 			package2OCL(e)
 	
 	if isPackageSelected == False:
