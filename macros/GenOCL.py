@@ -140,8 +140,15 @@ def isUnspecifiedAssociation(asso):
 		
 	return False
 	
-
-    
+def orderedEndKeyWord(end):
+	'''
+	Return the key word 'ordered' if endAsso is ordered
+	'''
+	if end.isIsOrdered():
+		return ' ordered'
+		
+	return ''
+	 
 #---------------------------------------------------------
 #   Helpers for the target representation (text)
 #---------------------------------------------------------
@@ -288,7 +295,7 @@ def umlAssociation2OCL(clazz):
 			print associationClassString(asso) + assoName + ' between'
 			
 			for end in asso.end:
-				print '\t' + end.owner.name + '[' + end.multiplicityMin + '..' + end.multiplicityMax + ']' + associationRoleName(end)			
+				print '\t' + end.owner.name + '[' + end.multiplicityMin + '..' + end.multiplicityMax + ']' + associationRoleName(end) + orderedEndKeyWord(end)			
 			
 			if isAssociationRelationship(asso):
 				# handle association class there
