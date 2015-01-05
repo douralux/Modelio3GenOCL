@@ -130,6 +130,15 @@ def associationClassString(asso):
 		return 'associationclass '
 		
 	return 'association '
+
+def isUnspecifiedAssociation(asso):
+	'''
+	Return true if it's an unspecified asso (unamed)
+	'''
+	if len(asso.name) == 0:
+		return True
+		
+	return False
 	
 
     
@@ -249,19 +258,34 @@ def umlAssociation2OCL(clazz):
 	'''
 	UML association to OCL
 	'''
-	targetingEnds = clazz.targetingEnd
-		
-	# For all targetingEnd 
-	for target in targetingEnds: 
+	ownedEnds = clazz.ownedEnd
+	global _global_assoAlreadyTreated
+	global _global_asso_unspecified
+	
+	# For all ownedEnd 
+	for owned in ownedEnds: 
 		# Get the association
-		asso = target.association 
+		asso = owned.association 
+		
+		# Avoid handling orphaned association ;)
+		if asso is None:
+			continue
+		
+		# Check if it's an unspecified asso
+		assoName = ''
+		if isUnspecifiedAssociation(asso):
+			assoName = 'unspecifiedName_' + str(_global_asso_unspecified)
+			_global_asso_unspecified = _global_asso_unspecified + 1
+		else:
+			assoName = asso.name
+				
 			
-		# Checking if association isn't treat yet
-		if not (asso.name in targetAlreadyTreated):
-			# Add the name to the list
-			targetAlreadyTreated.append(asso.name)
+		# Check if association isn't treat yet
+		if not (asso in _global_assoAlreadyTreated):
+			# Add the asso to the set
+			_global_assoAlreadyTreated.add(asso)
 			
-			print associationClassString(asso) + asso.name + ' between'
+			print associationClassString(asso) + assoName + ' between'
 			
 			for end in asso.end:
 				print '\t' + end.owner.name + '[' + end.multiplicityMin + '..' + end.multiplicityMax + ']' + associationRoleName(end)			
@@ -334,7 +358,10 @@ isPackageSelected = False
 
 # Contains associations whose OCL declaration are already generated
 # Avoid duplicate declaration
-targetAlreadyTreated = []
+global _global_assoAlreadyTreated 
+_global_assoAlreadyTreated = set()
+global _global_asso_unspecified
+_global_asso_unspecified = 0
 
 if len(elements) > 0:
 	print 'model CyberResidences\n'
