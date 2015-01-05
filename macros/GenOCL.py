@@ -76,13 +76,23 @@ def inheritance(clazz):
 	'''
 	Check if a class is subclass of another class 
 	then return the representation in OCL format
-	'''
+	'''	
 	parents = clazz.parent
-	if len(parents) > 0:
-		p = parents.get(0)
-		return ' < ' + p.superType.name
+	i = 0
+	size = len(parents)
+	result = ' < '
 	
-	return ''
+	while i < (size - 1):
+		p = parents.get(i)
+		result = result + p.superType.name + ', '
+		i = i + 1
+	
+	if size > 0:
+		result = result + parents.get(i).superType.name
+	else:
+		result = ''
+		
+	return result
 
 def abstract(clazz):
 	'''
