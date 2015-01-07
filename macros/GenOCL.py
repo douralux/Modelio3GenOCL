@@ -133,12 +133,23 @@ def isAssociationRelationship(asso):
 	
 def associationClassString(asso):
 	'''
-	Return 'associationClass' if asso is an association class or 'association' if not
+	Return 'associationClass' if asso is an association class or 'association' | 'composition'
+	| 'aggregation' if not
 	'''
 	if isAssociationRelationship(asso):
 		return 'associationclass '
+	
+	# Try to find the kind of association
+	kind = 'association '
+	for end in asso.end:
+		if end.aggregation == AggregationKind.KINDISCOMPOSITION:
+			kind = 'composition '
+			break
+		if end.aggregation == AggregationKind.KINDISAGGREGATION:
+			kind = 'aggregation '
+			break
 		
-	return 'association '
+	return kind
 
 def isUnspecifiedAssociation(asso):
 	'''
@@ -232,7 +243,7 @@ def umlOperation2OCL(operation):
 	"""
 	UML operation generation
 	"""
-	print '\t' + operation.name + '() : ' + operation.return.type.name # TO COMPLETE !!!
+	print '\t' + operation.name + '() : ' #+ operation.return.type.name # TO COMPLETE !!!
 	
 def umlClass2OCL(clazz):
 	"""
