@@ -103,12 +103,21 @@ def abstract(clazz):
 	
 	return ''
 	
+def upcaseFirstLetter(str):
+	'''
+	Upcase the first letter of str
+	'''
+	if str == '':
+		return ''
+		
+	return str[0].upper() + str[1:]
+	
 def associationRoleName(asso):
 	'''
 	Get the association end role name
 	'''
 	if len(asso.name) > 0:
-		return ' role ' + asso.name.capitalize()
+		return ' role ' + upcaseFirstLetter(asso.name)
 		
 	return ''
 
@@ -204,7 +213,8 @@ def umlBasicType2OCL(basicType):
 	"""
 	if basicType == 'float':
 		return 'Real'
-	return basicType.capitalize()
+		
+	return upcaseFirstLetter(basicType)
 	
 def paramater2OCL(parameter):
 	"""
