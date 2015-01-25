@@ -160,6 +160,12 @@ def isUnspecifiedAssociation(asso):
 		
 	return False
 	
+def isNAryAssociation(asso):
+	'''
+	true if it's an NAry association
+	'''
+	 
+	
 def orderedEndKeyWord(end):
 	'''
 	Return the key word 'ordered' if endAsso is ordered
@@ -206,6 +212,10 @@ def umlEnumeration2OCL(enumeration):
 	values = enumeration.value
 	n = len(values) 
 	
+	if n == 0:
+		return
+	
+	print normalizeNote(umlNote2OCL(enumeration.descriptor))
 	print 'enum ' + enumeration.name 
 	print '{'
 	
@@ -226,24 +236,86 @@ def umlBasicType2OCL(basicType):
 		return 'Real'
 		
 	return upcaseFirstLetter(basicType)
+
+def normalizeNote(str):
+	'''
+	Replace \n by \n-- in order to avoid unencommented note
+	'''
+	if len(str) > 0:
+		return str.replace('\n', '\n-- ')
+		
+	return str
 	
-def paramater2OCL(parameter):
+def operationNotes(operation):
+	'''
+	Get an operation comment to OCL
+	'''
+	i = 0
+	parameters = operation.getIO()
+	n = len(parameters)
+	
+	result = normalizeNote(umlNote2OCL(operation.descriptor)) 
+	
+	if n == 0:
+		return result
+		
+	while i < (n-1):
+		result = result + normalizeNote(umlNote2OCL(parameters.get(i).descriptor)) + '\n'
+		i = i + 1
+	
+	result = result + normalizeNote(umlNote2OCL(parameters.get(i).descriptor))
+	
+	return result
+
+def parameter2OCL(parameters):
 	"""
 	Parameter representation in OCL
 	"""
-	# TODO
+	i = 0
+	n = len(parameters)
+	result = ''
+	
+	if n == 0:
+		return result
+		
+	while i < (n-1): 
+		result = result + parameters.get(i).name + ' : ' + upcaseFirstLetter(parameters.get(i).type.name) + ', '
+		i = i + 1
 
+	result = result + parameters.get(i).name + ' : ' + upcaseFirstLetter(parameters.get(i).type.name)
+	
+	return result
+
+def return2OCL(retur):
+	'''
+	OCL return representation
+	'''
+	result = ''
+
+	if retur is None:
+		return result
+		
+	if retur.multiplicityMax == '1' and retur.multiplicityMin == '1':
+		result = ' : ' + upcaseFirstLetter(retur.type.name)
+		
+	else:
+		result = ' : ' + 'Set(' + upcaseFirstLetter(retur.type.name) + ')'
+	
+	return result
+	
 def umlAttribute2OCL(attribute):
 	"""
 	UML attribute generation
 	"""
-	print '\t' + attribute.name + ' : ' + umlBasicType2OCL(attribute.type.name)
+	print '\t' + attribute.name + ' : ' + umlBasicType2OCL(attribute.type.name) + ' ' + normalizeNote(umlNote2OCL(attribute.descriptor))
 	
 def umlOperation2OCL(operation):
 	"""
 	UML operation generation
 	"""
-	print '\t' + operation.name + '() : ' #+ operation.return.type.name # TO COMPLETE !!!
+	
+	print operationNotes(operation)
+	print '\t' + operation.name + '(' + parameter2OCL(operation.getIO()) + ') ' + return2OCL(operation.getReturn())
 	
 def umlClass2OCL(clazz):
 	"""
@@ -251,6 +323,8 @@ def umlClass2OCL(clazz):
 	"""
 	attributes = clazz.ownedAttribute
 	operations = clazz.ownedOperation
+	
+	print normalizeNote(umlNote2OCL(clazz.descriptor))
 	
 	if not isAssociationClass(clazz):
 		print abstract(clazz) + 'class ' + clazz.name + inheritance(clazz)	
@@ -326,8 +400,60 @@ def umlAssociation2OCL(clazz):
 				umlAssociation2OCL(asso.linkToClass.classPart)
 			else:
 				print 'end\n'			
+	
+	# Handle Nary there
+	naryEnds = clazz.ownedNaryEnd
+	for nary in naryEnds:
+		naryAsso = nary.naryAssociation
+		
+		# Avoid handling orphaned association
+		if naryAsso is None:
+			continue
+		
+		# Handle unspecified association
+		assoName = naryAsso.name
+		if len(assoName) <= 0:
+			assoName = 'unspecifiedName_' + str(_global_asso_unspecified)
+			_global_asso_unspecified = _global_asso_unspecified + 1
+		
+		##
+		if not(naryAsso in _global_assoAlreadyTreated):
+			_global_assoAlreadyTreated.add(naryAsso)
+			
+			print 'association ' + assoName + ' between'
+			
+			for end in naryAsso.naryEnd:
+				print '\t' + end.owner.name + '[' + end.multiplicityMin + '..' + end.multiplicityMax + ']' + associationRoleName(end) + orderedEndKeyWord(end)
+			
+			# Handle Nary asso class there not performed yet
+			
+			print 'end\n'
+			
+def constraint2OCL(constraint):
+	'''
+	constraint representation in OCL
+	'''
+	# Constraint are commented ('--') and let the user the freedom to add the body
+	print '-- context ' + constraint.owner.name + ' inv ' + constraint.name 
+	
+	for note in constraint.descriptor:
+		if len(note.content) != 0:
+			print '\t-- ' + note.content
+		
+	print '\n'
 
-# etc.
+def umlNote2OCL(notes):
+	'''
+	Note to OCL comments
+	'''
+	result = ''
+	
+	for note in notes:
+		if len(note.content) > 0:
+			result = result + '-- '+ note.content
+	
+	return result
+#####
 
 def package2OCL(package):
 	"""
@@ -363,6 +489,22 @@ def enumPackageGeneration(package):
 		if isinstance(element, Package):
 			enumPackageGeneration(element) # Handle other packages
 
+def constraintGeneration(package):
+	'''
+	Constraint generation
+	'''
+	elements = package.ownedElement
+
+	for element in elements:
+		if isinstance(element, Class):
+			signals = element.ownedElement
+			for signal in signals:
+				if isinstance(signal, Signal):
+					constraint2OCL(signal)
+					
+		if isinstance(element, Package):
+			constraintGeneration(element) # treat other packages
+			
 #---------------------------------------------------------
 #           User interface for the Transformation 
 #---------------------------------------------------------
@@ -401,6 +543,8 @@ if len(elements) > 0:
 			enumPackageGeneration(e)
 			# Generate the rest
 			package2OCL(e)
+			# Generate the constraints
+			constraintGeneration(e)
 	
 	if isPackageSelected == False:
 		print '-- No selected valide package !'
