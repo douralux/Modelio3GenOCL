@@ -29,7 +29,8 @@ Current state of the tests
 FILL THIS SECTION 
 Explain how did you test this generator.
    We tested our generator with class models which are in project UMLTestCases. And we believe that these models are sufficient to cover the most used models in UML to generate
-   use OCL code
+   use OCL code.
+   To test our generator on functional case we tested on CyberResidence Project. The result generated is loaded in USE app. The result for USE showed no errors.
 
 Which test are working? 
 	All tests work. 
