@@ -13,19 +13,34 @@ Current state of the generator
 ----------------------------------
 FILL THIS SECTION 
 Explain which UML constructs are supported, which ones are not.
+All UML constructs of the provided project UMLTestCases, (ClassModels) are supported except those which are not implemented in USE specifications like:
+	- Attributes visiblity
+	- Attributes cardinality
+	
 What is good in your generator?
+	- Our generator covers most of use uml models and can be then used by end user easily
+	
 What are the current limitations?
+	- The Nary association is considered like an 'association', it means that we haven't aggregation or composition generator for Nary asso but we believe that simple association can deal with it
+	- Also with Nary association we didn't take account the case of Nary association class
 
 Current state of the tests
 --------------------------
 FILL THIS SECTION 
 Explain how did you test this generator.
-Which test are working? 
-Which are not?
+   We tested our generator with class models which are in project UMLTestCases. And we believe that these models are sufficient to cover the most used models in UML to generate
+   use OCL code
 
+Which test are working? 
+	All tests work. 
+	
+Which are not?
+	None.
+	
 Observations
 ------------
 Additional observations could go there
+	None
 """
 
 
